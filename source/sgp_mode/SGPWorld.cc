@@ -312,6 +312,8 @@ std::optional<emp::WorldPosition> SGPWorld::FindHostForHorizontalTrans(
   return fun_find_host_for_horizontal_trans(host_world_id, sym_parent_ptr);
 }
 
+//GABE TODO - REMOVE COMMENTED CODE
+/*
 void SGPWorld::ProcessSymOutputBuffer(sgp_sym_t& sym) {
   auto& cpu_state = sym.GetHardware().GetCPUState();
   const size_t env_task_id = cpu_state.GetTaskEnvID();
@@ -381,6 +383,7 @@ void SGPWorld::ProcessSymOutputBuffer(sgp_sym_t& sym) {
   // Clear output buffer
   output_buffer.clear();
 }
+*/
 
 void SGPWorld::HostDoMutation(sgp_host_t& host) {
   mutator.MutateProgram(host.GetProgram());

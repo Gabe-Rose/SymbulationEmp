@@ -331,42 +331,42 @@ public:
   }
 
   void ProcessEndosymbionts() {
-  // If host doesn't have a symbiont, return.
-  if (!HasSym()) {
-    return;
-  }
-  emp::vector<emp::Ptr<Organism>>& syms = GetSymbionts();
-  size_t sym_count = syms.size();
-  for (size_t sym_i = 0; sym_i < sym_count; /*sym_i handled internally*/) {
-    emp_assert(!(syms[sym_i]->IsHost()));
-    // If host is dead (e.g., because of previous symbiont), stop processing.
-    if (GetDead()) {
+    // If host doesn't have a symbiont, return.
+    if (!HasSym()) {
       return;
     }
-    emp::Ptr<sgp_sym_t> cur_symbiont = static_cast<sgp_sym_t*>(syms[sym_i].Raw());
-    const bool dead = cur_symbiont->GetDead();
-    if (!dead) {
-      // Symbiont not dead, process it
-      // TODO - change to functor?
-      cur_symbiont->Process({sym_i + 1, GetLocation().GetIndex()});
-      ++sym_i;
-    } else {
-      // TODO: this should probably be it's own function to abstract this logic and share it other places
-      emp_assert(sym_count > 0);
-      // TODO - Check that it is okay to re-order symbionts to avoid erase calls
-      // Symbiont is dead, need to delete it.
-      cur_symbiont.Delete();
-      // Swap this symbiont with last in list, decrementing sym_count
-      std::swap(syms[sym_i], syms[--sym_count]);
-      // We will need to process what we just swapped into place, so
-      // re-process sym_i (don't increment it)
+    emp::vector<emp::Ptr<Organism>>& syms = GetSymbionts();
+    size_t sym_count = syms.size();
+    for (size_t sym_i = 0; sym_i < sym_count; /*sym_i handled internally*/) {
+      emp_assert(!(syms[sym_i]->IsHost()));
+      // If host is dead (e.g., because of previous symbiont), stop processing.
+      if (GetDead()) {
+        return;
+      }
+      emp::Ptr<sgp_sym_t> cur_symbiont = static_cast<sgp_sym_t*>(syms[sym_i].Raw());
+      const bool dead = cur_symbiont->GetDead();
+      if (!dead) {
+        // Symbiont not dead, process it
+        // TODO - change to functor?
+        cur_symbiont->Process({sym_i + 1, GetLocation().GetIndex()});
+        ++sym_i;
+      } else {
+        // TODO: this should probably be it's own function to abstract this logic and share it other places
+        emp_assert(sym_count > 0);
+        // TODO - Check that it is okay to re-order symbionts to avoid erase calls
+        // Symbiont is dead, need to delete it.
+        cur_symbiont.Delete();
+        // Swap this symbiont with last in list, decrementing sym_count
+        std::swap(syms[sym_i], syms[--sym_count]);
+        // We will need to process what we just swapped into place, so
+        // re-process sym_i (don't increment it)
+      }
     }
+    // Resize syms to remove deleted dead symbionts swapped to end
+    emp_assert(sym_count <= syms.size());
+    syms.resize(sym_count);
+    // TODO - signal?
   }
-  // Resize syms to remove deleted dead symbionts swapped to end
-  emp_assert(sym_count <= syms.size());
-  syms.resize(sym_count);
-  // TODO - signal?
-}
 
   /**
    * Input: None.
@@ -423,50 +423,50 @@ public:
           // Is this a host task?
           if (!task_env.IsHostTask(task_id)) continue;
           // Not first task
-          const bool not_first_task = my_world->GetConfig().HOST_ONLY_FIRST_TASK_CREDIT() && cpu_state.GetFirstTaskPerformed().Any() && !cpu_state.GetFirstTaskPerformed().Get(task_id);
-          if (not_first_task) {
+          const bool not_first_task = 
+            my_world->GetConfig().HOST_ONLY_FIRST_TASK_CREDIT() && 
+            cpu_state.GetFirstTaskPerformed().Any() && 
+            !cpu_state.GetFirstTaskPerformed().Get(task_id);
+          if (not_first_task) continue;
+
+          // Has this organism already gotten credit with this output on this task?
+          if (cpu_state.OutputCredited(task_id, val)) continue;
+          // Check task requirements
+          auto& task_req_info = task_env.GetHostTaskReq(task_id);
+          if (!my_world->CanPerformTask(cpu_state, task_req_info)) {
             continue;
           }
 
-        // Has this organism already gotten credit with this output on this task?
-        if (cpu_state.OutputCredited(task_id, val)) continue;
-        // Check task requirements
-        auto& task_req_info = task_env.GetHostTaskReq(task_id);
-        if (!my_world->CanPerformTask(cpu_state, task_req_info)) {
-          continue;
+          // Manage CPU state after completing a task:
+          //   (1) Mark task as being performed
+          cpu_state.MarkTaskPerformed(task_id);
+          //   (2) Credit output
+          cpu_state.CreditOutputValue(task_id, val);
+          //   (3) Clear output credits if outputs credited >= number of pre-computed outputs
+          //       for this task in the task io bank.
+          if (cpu_state.GetOutputsCredited(task_id).size() >= task_io.GetNumTaskOutputs(task_id)) {
+            cpu_state.ResetCreditedOutputs(task_id);
+          }
+
+          // Calc value, add to organism points
+          double new_points = task_req_info.fun_calc_task_val(
+            task_env,
+            task_req_info,
+            GetPoints()
+          );
+          double task_points = new_points - GetPoints();
+
+          //World handles giving host points and adjusting that amount based on if any points are removed or by symbionts
+          my_world->ApplyHostPoints(*this, task_points,task_id);
+          my_world->GetHostTaskSuccesses()[task_id] += 1;
+
         }
-
-        // Manage CPU state after completing a task:
-        //   (1) Mark task as being performed
-        cpu_state.MarkTaskPerformed(task_id);
-        //   (2) Credit output
-        cpu_state.CreditOutputValue(task_id, val);
-        //   (3) Clear output credits if outputs credited >= number of pre-computed outputs
-        //       for this task in the task io bank.
-        if (cpu_state.GetOutputsCredited(task_id).size() >= task_io.GetNumTaskOutputs(task_id)) {
-          cpu_state.ResetCreditedOutputs(task_id);
-        }
-        // Calc value, add to organism points
-
-
-        double new_points = task_req_info.fun_calc_task_val(
-          task_env,
-          task_req_info,
-          GetPoints()
-        );
-        double task_points = new_points - GetPoints();
-
-        //World handles giving host points and adjusting that amount based on if any points are removed or by symbionts
-        my_world->ApplyHostPoints(*this, task_points,task_id);
-        my_world->GetHostTaskSuccesses()[task_id] += 1;
-
       }
     }
-  }
 
-  // Clear output buffer
-  output_buffer.clear();
-}
+    // Clear output buffer
+    output_buffer.clear();
+  }
 
 
 
