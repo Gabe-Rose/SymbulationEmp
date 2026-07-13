@@ -35,8 +35,8 @@ private:
 
   const int RECT_WIDTH = 10;
 
-  emp::Random random{config.SEED()};
-  SymWorld world{random, &config};
+  emp::Random random;
+  SymWorld world;
 
 
   emp::vector<emp::Ptr<Organism>> p;
@@ -107,6 +107,9 @@ public:
     // cfg.Read("config.cfg");
     am.UseCallbacks();
     if (am.HasUnused()) std::exit(EXIT_FAILURE);
+
+    random = emp::Random{config.SEED()};
+    world = SymWorld{random, &config};
 
     // setup configuration panel
     //config_panel.Setup();
