@@ -3,6 +3,7 @@
 #define SYM_ANIMATE_H
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include "uitsl/fetch/autoinstall.hpp"
 #include "default_mode/SymWorld.h"
@@ -57,7 +58,8 @@ private:
   const int RECT_WIDTH = 10;
 
   emp::Random random;
-  SymWorld world;
+  // optional allows emplacement once config is parsed
+  std::optional<SymWorld> world;
 
 
   emp::vector<emp::Ptr<Organism>> p;
@@ -117,7 +119,6 @@ public:
     buttons.SetCSS("max-width", "600px");
 
 
-    initializeWorld();
     emp::prefab::Card config_panel_ex("INIT_CLOSED");
     settings << config_panel_ex;
     config_panel_ex.AddHeaderContent("<h3>Settings</h3>");
@@ -131,7 +132,8 @@ public:
     }
 
     random = emp::Random{config.SEED()};
-    world = SymWorld{random, &config};
+    world.emplace(random, &config);
+    initializeWorld();
 
     // setup configuration panel
     //config_panel.Setup();
@@ -157,14 +159,14 @@ public:
     buttons.Button("toggle").OnMouseOut([this](){ auto but = buttons.Button("toggle"); but.SetCSS("background-color", "#D3D3D3"); });
 
     // ----------------------- Add a reset button to reset the animation/world -----------------------
-    /* Note: Must first run world.Reset(), because Inject checks for valid position.
+    /* Note: Must first run world->Reset(), because Inject checks for valid position.
       If a position is occupied, new org is deleted and your world isn't reset.
       Also, canvas must be redrawn to let users see that it is reset */
     buttons.AddButton([this](){
-      world.Reset();
+      world->Reset();
       buttons.Text("update").Redraw();
       initializeWorld();
-      p = world.GetPop();
+      p = world->GetPop();
 
       if (GetActive()) { // If animation is running, stop animation and adjust button label
         ToggleActive();
@@ -185,7 +187,7 @@ public:
 
     // ----------------------- Keep track of number of updates -----------------------
     buttons << "<br>";
-    buttons << UI::Text("update") << "Update = " << UI::Live( [this](){ return world.GetUpdate(); } ) << "  ";
+    buttons << UI::Text("update") << "Update = " << UI::Live( [this](){ return world->GetUpdate(); } ) << "  ";
     buttons << UI::Text("mut") << "Mutualistic = " << UI::Live( [this](){ return num_mutualistic; } ) << "  ";
     buttons << UI::Text("par") << " Parasitic = " << UI::Live( [this](){ return num_parasitic; } );
     buttons << "<br>";
@@ -211,11 +213,11 @@ public:
   void initializeWorld(){
      // Reset the seed and the random machine of world to ensure consistent result (??)
     random.ResetSeed(config.SEED());
-    world.SetRandom(random);
+    world->SetRandom(random);
 
-    world.Setup();
+    world->Setup();
 
-    p = world.GetPop();
+    p = world->GetPop();
 
   }
 
@@ -320,15 +322,15 @@ public:
    */
   void DoFrame() {
 
-    if (world.GetUpdate() == config.UPDATES() && GetActive()) {
+    if (world->GetUpdate() == config.UPDATES() && GetActive()) {
         ToggleActive();
     } else {
       mycanvas = animation.Canvas("can"); // get canvas by id
       mycanvas.Clear();
 
       // Update world and draw the new petri dish
-      world.Update();
-      p = world.GetPop();
+      world->Update();
+      p = world->GetPop();
       drawPetriDish(mycanvas);
       buttons.Text("update").Redraw();
       buttons.Text("mut").Redraw();
