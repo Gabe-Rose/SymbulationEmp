@@ -9,6 +9,7 @@
 //#include "SymJS.h"
 #include "default_mode/Symbiont.h"
 #include "default_mode/Host.h"
+#include "emp/base/errors.hpp"
 #include "emp/web/Document.hpp"
 #include "emp/web/Canvas.hpp"
 #include "emp/web/web.hpp"
@@ -106,7 +107,9 @@ public:
     emp::ArgManager am(emp::web::GetUrlParams(), specs);
     // cfg.Read("config.cfg");
     am.UseCallbacks();
-    if (am.HasUnused()) std::exit(EXIT_FAILURE);
+    if (am.HasUnused()) {
+      emp::NotifyWarning("Unrecognized URL query parameters, ignored.");
+    }
 
     random = emp::Random{config.SEED()};
     world = SymWorld{random, &config};
