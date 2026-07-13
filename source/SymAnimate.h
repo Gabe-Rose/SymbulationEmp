@@ -3,6 +3,8 @@
 #define SYM_ANIMATE_H
 
 #include <iostream>
+#include <string>
+#include "uitsl/fetch/autoinstall.hpp"
 #include "default_mode/SymWorld.h"
 #include "default_mode/DataNodes.h"
 #include "ConfigSetup.h"
@@ -22,6 +24,24 @@
 namespace UI = emp::web;
 SymConfigBase config; // load the default configuration
 
+/// Configure accepted URL query params: config keys and autoinstall...
+/// e.g., symbulation.html?autoinstall=foo.com/file.json&VERTICAL_TRANSMISSION=0.9
+emp::ArgManager::spec_map_t arg_specs = [](){
+  auto specs = emp::ArgManager::make_builtin_specs(&config);
+  specs["autoinstall"] = emp::ArgSpec(
+    1, // one value expected
+    "URL of a file to download into the virtual filesystem at startup",
+    {}, // no aliases
+    [](const emp::optional<emp::vector<std::string>>& urls) {
+      if (!urls) return;
+      for (const std::string& url : *urls) {
+        std::cout << "autoinstalled " << url << " as "
+                  << uitsl::autoinstall(url) << std::endl;
+      }
+    }
+  );
+  return specs;
+}();
 
 
 class SymAnimate : public UI::Animate {
@@ -103,8 +123,7 @@ public:
     config_panel_ex.AddHeaderContent("<h3>Settings</h3>");
 
     // apply configuration query params and config files to config
-    auto specs = emp::ArgManager::make_builtin_specs(&config);
-    emp::ArgManager am(emp::web::GetUrlParams(), specs);
+    emp::ArgManager am(emp::web::GetUrlParams(), arg_specs);
     // cfg.Read("config.cfg");
     am.UseCallbacks();
     if (am.HasUnused()) {
