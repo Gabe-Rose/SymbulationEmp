@@ -336,7 +336,7 @@ public:
 
 
 
-//GABE TODO after refactor remove comment in SGPWorld.cc
+//GABE TODO after full refactor remove comment in SGPWorld.cc
 
 void ProcessOutputBuffer() {
   auto& cpu_state = GetHardware().GetCPUState();
@@ -382,16 +382,6 @@ void ProcessOutputBuffer() {
           cpu_state.ResetCreditedOutputs(task_id);
         }
 
-        //GABE TODO:
-        //There is no equivalent of line ++sym_...id]; in the SGPHost.h port, and a quick look
-        //through the repository doesent show ++host_task_success. Could be a bug?
-        //WAS:
-        // Track success
-        //++sym_task_successes[task_id];
-        //NOW:
-        // Track success
-        ++(my_world->sym_task_successes[task_id])
-
         // Calc base task value based on task environment, task requirements, and
         // symbiont's current point value.
         // NOTE - A little funky because task value might be a multiplier on
@@ -412,10 +402,15 @@ void ProcessOutputBuffer() {
         // Add earned task points to symbiont's point total
         AddPoints(task_points);
         // // Enforce limits on points
+
+        //GABE TODO
         // const double max_points = my_world->GetConfig().SYM_HORIZ_TRANS_RES();
         // if (sym.GetPoints() > (1.5 * my_world->GetConfig().SYM_HORIZ_TRANS_RES())) {
         //   sym.SetPoints(1.5 * my_world->GetConfig().SYM_HORIZ_TRANS_RES());
         // }
+        
+        //add task success
+        my_world->GetSymTaskSuccesses()[task_id] += 1;
       }
     }
   }
