@@ -19,6 +19,7 @@ public:
   using hw_t = SGPHardware<hw_spec_t>;
   using program_t = typename hw_t::program_t;
   using host_t = SGPHost<HW_SPEC_T>;
+  using nutrient_sym_mode_t = typename org_info::NutrientSymbiontType;
 
 protected:
   // SignalGP hardware
@@ -395,7 +396,7 @@ void ProcessOutputBuffer() {
         double task_points = new_points - GetPoints();
 
         //Parasitic Nutrient symbionts receieve less rewards from completing tasks to incentivize matching tasks with hosts
-        if(my_world->GetConfig().ENABLE_NUTRIENT() && GetNutrientSymType() == my_world->nutrient_sym_mode_t::PARASITE){
+        if(my_world->GetConfig().ENABLE_NUTRIENT() && my_world->GetNutrientSymType() == nutrient_sym_mode_t::PARASITE){
           task_points *= my_world->GetConfig().PARASITE_BASE_TASK_VALUE_PROP();
         }
 
