@@ -29,7 +29,9 @@ namespace sgpmode {
       SetupNutrientInteractions();
     } // default is no nutrient interactions, which is set in SGPWorld constructor
 
+    
     SetupHostTaskRewards();
+    SetupSymTaskRewards();
 
   }
 
@@ -742,6 +744,35 @@ namespace sgpmode {
     }
   }
 
+  /*
+  * Input: None
+  * Outpt: None
+  * Purpose: Sets up functor to decide what happens when a sym tries to receive point reward for completing a task
+  */
+  void SGPWorld::SetupSymTaskRewards() {
+    if (sgp_config.ENABLE_NUTRIENT() == false) {
+      fun_apply_sym_points = [this](
+        sgp_sym_t& sym,
+        double task_value_before,
+        size_t task_id
+      ) {
+        sym.AddPoints(task_value_before);
+      };
+    } else {
+      fun_apply_sym_points = [this](
+        sgp_sym_t& sym,
+        double task_value_before,
+        size_t task_id
+      ) {
+        double task_value = task_value_before;
+        if(GetNutrientSymType() == nutrient_sym_mode_t::PARASITE){
+          task_value *= sgp_config.PARASITE_BASE_TASK_VALUE_PROP();
+        }
+        sym.AddPoints(task_value);
+      };
+    }
+  
+  }
 
 
 
