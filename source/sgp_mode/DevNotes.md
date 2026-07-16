@@ -2,7 +2,6 @@
 
 ## Further refactoring list:
 * Add SGP mode to API reference doc
-* Move ProcessSymOutputBuffer into SGPSymbiont to parallel host
 * Move SymDoMutation into SGPSymbiont to parallel host
 * Look at whether can move SymDonateToHost and SymStealFromHost into SGPSym
 * Look at fun_host_sym_stress_trans_compatibility_check to try to reduce code duplication of task-profile setups, possibly with decorator pattern, but also definitely just in own file

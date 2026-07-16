@@ -327,29 +327,23 @@ public:
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-//GABE TODO after full refactor remove comment in SGPWorld.cc
-
+/**
+   * Input: None.
+   *
+   * Output: None.
+   *
+   * Purpose: Reward for any solved tasks in the output buffer and update data tracking appropriately.
+   */
 void ProcessOutputBuffer() {
   auto& cpu_state = GetHardware().GetCPUState();
   const size_t env_task_id = cpu_state.GetTaskEnvID();
   auto& task_env = my_world->GetTaskEnv();
   const auto& task_io = task_env.GetIOBank().GetIO(env_task_id);
-  // Process output buffer
   auto& output_buffer = cpu_state.GetOutputBuffer();
   for (uint32_t val : output_buffer) {
-    // Is this the correct output for any tasks?
+    // Check for valid output
     if (task_io.IsValidOutput(val)) {
-      // Yes, this output is correct.
+
       // Get all task ids associated with this output value
       const emp::vector<size_t>& task_ids = task_io.GetTaskIDs(val);
 
@@ -357,7 +351,8 @@ void ProcessOutputBuffer() {
       for (size_t task_id : task_ids) {
         // Is this a valid sym task?
         if (!task_env.IsSymTask(task_id)) continue;
-        // Not first task
+        
+        //check first task credit
         const bool not_first_task = 
           my_world->GetConfig().SYM_ONLY_FIRST_TASK_CREDIT() && 
           cpu_state.GetFirstTaskPerformed().Any() && 
@@ -366,6 +361,7 @@ void ProcessOutputBuffer() {
 
         // Has this organism already gotten credit with this output on this task?
         if (cpu_state.OutputCredited(task_id, val)) continue;
+
         // Check task requirements
         auto& task_req_info = task_env.GetSymTaskReq(task_id);
         if (!my_world->CanPerformTask(cpu_state, task_req_info)) {
@@ -373,21 +369,13 @@ void ProcessOutputBuffer() {
         }
 
         // Manage CPU state after completing a task:
-        //   (1) Mark task as being performed
         cpu_state.MarkTaskPerformed(task_id);
-        //   (2) Credit output
         cpu_state.CreditOutputValue(task_id, val);
-        //   (3) Clear output credits if outputs credited >= number of pre-computed outputs
-        //       for this task in the task io bank.
         if (cpu_state.GetOutputsCredited(task_id).size() >= task_io.GetNumTaskOutputs(task_id)) {
           cpu_state.ResetCreditedOutputs(task_id);
         }
 
-        // Calc base task value based on task environment, task requirements, and
-        // symbiont's current point value.
-        // NOTE - A little funky because task value might be a multiplier on
-        //        current sym points.
-        //        So, to get the value *added* by the task, we subtract original point value.
+        // Calc Value, add to organism points
         double new_points = task_req_info.fun_calc_task_val(
           task_env,
           task_req_info,
@@ -404,34 +392,14 @@ void ProcessOutputBuffer() {
         AddPoints(task_points);
         // // Enforce limits on points
 
-        //GABE TODO
-        // const double max_points = my_world->GetConfig().SYM_HORIZ_TRANS_RES();
-        // if (sym.GetPoints() > (1.5 * my_world->GetConfig().SYM_HORIZ_TRANS_RES())) {
-        //   sym.SetPoints(1.5 * my_world->GetConfig().SYM_HORIZ_TRANS_RES());
-        // }
-        
-        //add task success
+        //^^^ 386 through here are doing the work in 455 in SGPHost - could be refactored
+
         my_world->GetSymTaskSuccesses()[task_id] += 1;
       }
     }
   }
-  // Clear output buffer
   output_buffer.clear();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   /**
    * Input: None
