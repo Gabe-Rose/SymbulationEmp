@@ -551,6 +551,8 @@ protected:
   void SetupHostReproduction();
   void SetupHostTaskRewards();
   void SetupSymTaskRewards();
+  void OverrideHostRewardsNutrient();
+  void OverrideSymRewardsNutrient();
   void SetupTaskProfileMode();
   void SetupTaskProfileCompatibilityMode();
   void SetupHorizontalTransmissionCompatibilityMode();
