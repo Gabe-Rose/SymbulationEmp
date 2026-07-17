@@ -120,8 +120,6 @@ TEST_CASE("ProcessOutputBuffer Symbiont", "[sgp][sgp-unit]") {
   GIVEN("A symbiont with valid values in its input and output buffers") {
     emp::Random random(31);
 
-    //SymConfig is Symbulation Config
-    //GABE TODO Maybe refactor
     sgpmode::SymConfigSGP config;
 
     config.TASK_ENV_CFG_PATH("source/test/sgp_mode_test/echo-task-env.json");
