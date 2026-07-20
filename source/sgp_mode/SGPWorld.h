@@ -892,9 +892,6 @@ public:
   // Process symbiont at given position in the world
   void ProcessFreeLivingSymAt(const emp::WorldPosition& pos, sgp_sym_t& sym);
 
-  //void ProcessHostOutputBuffer(sgp_host_t& host);
-  void ProcessSymOutputBuffer(sgp_sym_t& sym);
-
   // NOTE - moved to be public for testing
   void AssignNewEnvIO(sgp_cpu_peripheral_t& cpu_state) {
     const size_t env_id = GetRandom().GetUInt(task_env.GetIOBank().GetSize());
