@@ -383,7 +383,7 @@ void ProcessOutputBuffer() {
           cpu_state.ResetCreditedOutputs(task_id);
         }
 
-        // Calc Value, add to organism points
+        // Calc Value
         double new_points = task_req_info.fun_calc_task_val(
           task_env,
           task_req_info,
@@ -391,18 +391,6 @@ void ProcessOutputBuffer() {
         );
         double task_points = new_points - GetPoints();
 
-        /*
-        //Parasitic Nutrient symbionts receieve less rewards from completing tasks to incentivize matching tasks with hosts
-        if(my_world->GetConfig().ENABLE_NUTRIENT() && my_world->GetNutrientSymType() == nutrient_sym_mode_t::PARASITE){
-          task_points *= my_world->GetConfig().PARASITE_BASE_TASK_VALUE_PROP();
-        }
-
-        // Add earned task points to symbiont's point total
-        AddPoints(task_points);
-        // // Enforce limits on points
-
-        //^^^ 386 through here are doing the work in 455 in SGPHost - could be refactored
-        */
         //World handles point movement between hosts and symbionts
         my_world->ApplySymPoints(*this, task_points, task_id);
         my_world->GetSymTaskSuccesses()[task_id] += 1;
