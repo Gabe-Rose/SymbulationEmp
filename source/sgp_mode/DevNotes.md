@@ -15,6 +15,7 @@
 * Compare ecto relevant code (i.e. default mode) between main and this refactor to see if something changed, when was the last time the ecto integration test didn't seg fault on Mac? Prior to aux bump?
 
 # Previous actions completed
+[x] Move ProcessSymOutputBuffer into SGPSymbiont to parallel host
 [x] Change renamed config settings (ORGANISM_TYPE) (also cleaned up some other unused config settings)
 [x] Get Host task credit and Task Match Check tests not seg faulting
 [x] Make mini guide on main changes for tests so others could help with test porting
